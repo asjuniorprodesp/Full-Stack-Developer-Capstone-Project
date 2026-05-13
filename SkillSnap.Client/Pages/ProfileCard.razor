@@ -1,5 +1,5 @@
 <article class="profile-card">
-	<img class="profile-card__image" src="@ProfileImageUrl" alt="Foto de perfil de @Name" />
+	<img class="profile-card__image" src="@ResolvedProfileImageUrl" alt="Foto de perfil de @Name" />
 	<div class="profile-card__content">
 		<h2>@Name</h2>
 		<p>@Bio</p>
@@ -7,9 +7,14 @@
 </article>
 
 @code {
-	[Parameter] public string Name { get; set; } = "Jordan Developer";
-	[Parameter] public string Bio { get; set; } = "Full-stack developer focado em .NET, Blazor e APIs modernas.";
-	[Parameter] public string ProfileImageUrl { get; set; } = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80";
+	[Parameter] public string Name { get; set; } = "Perfil";
+	[Parameter] public string Bio { get; set; } = string.Empty;
+	[Parameter] public string ProfileImageUrl { get; set; } = string.Empty;
+
+	private string ResolvedProfileImageUrl =>
+		string.IsNullOrWhiteSpace(ProfileImageUrl)
+			? "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80"
+			: ProfileImageUrl;
 }
 
 <style>

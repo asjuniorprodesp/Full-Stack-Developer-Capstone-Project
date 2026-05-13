@@ -1,38 +1,134 @@
 @SkillSnap.Api_HostAddress = http://localhost:5160
 
-# Insere dados de exemplo no banco
+### =================================
+### SEED / DATABASE OPERATIONS
+### =================================
+
+# Insere dados de exemplo no banco (2 usuários com projetos e skills)
 POST {{SkillSnap.Api_HostAddress}}/api/seed
 Accept: application/json
 
 ###
 
-# Executa novamente para validar retorno de conflito lógico (dados já existem)
+# Tenta seed novamente - retorna erro se dados já existem
 POST {{SkillSnap.Api_HostAddress}}/api/seed
 Accept: application/json
 
 ###
 
-# Lista todos os usuários de portfólio
-GET {{SkillSnap.Api_HostAddress}}/portfolio-users
+# Limpa a base para permitir novo seed
+DELETE {{SkillSnap.Api_HostAddress}}/api/seed
 Accept: application/json
 
 ###
 
-# Cria um novo usuário de portfólio
-POST {{SkillSnap.Api_HostAddress}}/portfolio-users
+# Executa seed novamente apos limpeza
+POST {{SkillSnap.Api_HostAddress}}/api/seed
+Accept: application/json
+
+###
+
+### =================================
+### PROFILE ENDPOINTS
+### =================================
+
+# Lista TODOS os perfis disponíveis
+GET {{SkillSnap.Api_HostAddress}}/api/profile/all
+Accept: application/json
+
+###
+
+# Obtém o primeiro perfil (default)
+GET {{SkillSnap.Api_HostAddress}}/api/profile
+Accept: application/json
+
+###
+
+# Atualiza o primeiro perfil
+POST {{SkillSnap.Api_HostAddress}}/api/profile
 Content-Type: application/json
 Accept: application/json
 
 {
-	"name": "Ana Dev",
-	"bio": "Full-stack developer focada em .NET e Blazor",
-	"profileImageUrl": "https://example.com/images/ana-dev.png"
+	"name": "Jordan Developer - Updated",
+	"bio": "Full-stack developer with updated bio.",
+	"profileImageUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80"
 }
 
 ###
 
-# Busca usuário por id (ajuste o id conforme retorno do POST)
-GET {{SkillSnap.Api_HostAddress}}/portfolio-users/1
+### =================================
+### PROJECTS ENDPOINTS
+### =================================
+
+# Lista todos os projetos
+GET {{SkillSnap.Api_HostAddress}}/api/projects
+Accept: application/json
+
+###
+
+# Cria um novo projeto (associado ao usuário 1)
+POST {{SkillSnap.Api_HostAddress}}/api/projects
+Content-Type: application/json
+Accept: application/json
+
+{
+	"title": "Mobile App",
+	"description": "Cross-platform mobile application using .NET MAUI.",
+	"imageUrl": "https://images.unsplash.com/photo-1512941691920-25bda36dc643?auto=format&fit=crop&w=800&q=80",
+	"portfolioUserId": 1
+}
+
+###
+
+### =================================
+### SKILLS ENDPOINTS
+### =================================
+
+# Lista todas as skills
+GET {{SkillSnap.Api_HostAddress}}/api/skills
+Accept: application/json
+
+###
+
+# Adiciona uma nova skill ao usuário 1
+POST {{SkillSnap.Api_HostAddress}}/api/skills
+Content-Type: application/json
+Accept: application/json
+
+{
+	"name": "React",
+	"level": "Intermediate",
+	"portfolioUserId": 1
+}
+
+###
+
+# Adiciona uma nova skill ao usuário 2
+POST {{SkillSnap.Api_HostAddress}}/api/skills
+Content-Type: application/json
+Accept: application/json
+
+{
+	"name": "Kubernetes",
+	"level": "Basic",
+	"portfolioUserId": 2
+}
+
+###
+
+### =================================
+### WORKFLOW: RESET & REPOPULATE
+### =================================
+
+# Limpa toda a base de dados
+DELETE {{SkillSnap.Api_HostAddress}}/api/seed
+Accept: application/json
+
+###
+
+# Repopula com dados de exemplo
+POST {{SkillSnap.Api_HostAddress}}/api/seed
 Accept: application/json
 
 ###

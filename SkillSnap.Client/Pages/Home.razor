@@ -1,9 +1,91 @@
 ﻿@page "/"
+@using SkillSnap.Client.Models
+@using SkillSnap.Client.Services
+@inject PortfolioUserService PortfolioUserService
 
 <PageTitle>SkillSnap</PageTitle>
 
 <h1>Meu Portfólio</h1>
 
-<ProfileCard />
-<ProjectList />
-<SkillTags />
+@if (!string.IsNullOrWhiteSpace(loadError))
+{
+	<p class="message message--error">@loadError</p>
+}
+else if (profiles.Count == 0)
+{
+	<p class="message">Nenhum perfil disponível. Execute o seed da API para testar.</p>
+}
+else
+{
+	<div class="profile-nav">
+		<button class="btn btn-outline-primary" @onclick="ShowPreviousProfile" disabled="@(selectedIndex == 0)">Anterior</button>
+		<span class="profile-nav__status">Perfil @((selectedIndex + 1)) de @profiles.Count</span>
+		<button class="btn btn-outline-primary" @onclick="ShowNextProfile" disabled="@(selectedIndex >= profiles.Count - 1)">Próximo</button>
+	</div>
+
+	<ProfileCard Name="@SelectedProfile.Name" Bio="@SelectedProfile.Bio" ProfileImageUrl="@SelectedProfile.ProfileImageUrl" />
+	<ProjectList SelectedUserId="@SelectedProfile.Id" />
+	<SkillTags SelectedUserId="@SelectedProfile.Id" />
+}
+
+@code {
+	private readonly List<PortfolioUser> profiles = new();
+	private int selectedIndex;
+	private string? loadError;
+
+	private PortfolioUser SelectedProfile => profiles[selectedIndex];
+
+	protected override async Task OnInitializedAsync()
+	{
+		var result = await PortfolioUserService.GetProfilesAsync();
+		if (result.Count == 0)
+		{
+			loadError = "Não foi possível carregar perfis. Verifique se a API está em execução e se há dados.";
+			return;
+		}
+
+		profiles.AddRange(result);
+		selectedIndex = 0;
+		loadError = null;
+	}
+
+	private void ShowPreviousProfile()
+	{
+		if (selectedIndex > 0)
+		{
+			selectedIndex--;
+		}
+	}
+
+	private void ShowNextProfile()
+	{
+		if (selectedIndex < profiles.Count - 1)
+		{
+			selectedIndex++;
+		}
+	}
+}
+
+<style>
+	.profile-nav {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 1rem;
+	}
+
+	.profile-nav__status {
+		font-weight: 600;
+		color: #344054;
+	}
+
+	.message {
+		margin-top: 0.75rem;
+		margin-bottom: 0;
+		font-size: 0.95rem;
+	}
+
+	.message--error {
+		color: #b42318;
+	}
+</style>

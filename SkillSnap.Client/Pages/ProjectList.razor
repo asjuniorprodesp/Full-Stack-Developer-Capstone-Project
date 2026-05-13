@@ -1,7 +1,16 @@
+@using SkillSnap.Client.Models
+@using SkillSnap.Client.Services
+@inject ProjectService ProjectService
+
 <section class="project-list">
 	<h3>Projetos</h3>
 
-	@foreach (var project in Projects)
+	@if (!string.IsNullOrWhiteSpace(loadError))
+	{
+		<p class="message message--error">@loadError</p>
+	}
+
+	@foreach (var project in projects)
 	{
 		<article class="project-item">
 			<h4>@project.Title</h4>
@@ -11,14 +20,37 @@
 </section>
 
 @code {
-	private readonly List<ProjectItem> Projects =
-	[
-		new("SkillSnap API", "API em ASP.NET Core com Entity Framework e SQLite."),
-		new("Dashboard Blazor", "Interface web para visualizar perfil, projetos e skills."),
-		new("Deploy Pipeline", "Automação de build e publicação contínua em ambiente cloud.")
-	];
+	[Parameter] public int SelectedUserId { get; set; }
 
-	private sealed record ProjectItem(string Title, string Description);
+	private List<Project> allProjects = new();
+	private List<Project> projects = new();
+	private string? loadError;
+
+	protected override async Task OnInitializedAsync()
+	{
+		var result = await ProjectService.GetProjectsResultAsync();
+		if (result.Success)
+		{
+			allProjects = result.Data ?? new List<Project>();
+			ApplyUserFilter();
+			loadError = null;
+			return;
+		}
+
+		loadError = result.ErrorMessage ?? "Não foi possível carregar os projetos.";
+	}
+
+	protected override void OnParametersSet()
+	{
+		ApplyUserFilter();
+	}
+
+	private void ApplyUserFilter()
+	{
+		projects = SelectedUserId <= 0
+			? allProjects
+			: allProjects.Where(project => project.PortfolioUserId == SelectedUserId).ToList();
+	}
 }
 
 <style>
@@ -47,5 +79,15 @@
 	.project-item p {
 		margin: 0.3rem 0 0;
 		color: #4a4a4a;
+	}
+
+	.message {
+		margin-top: 0.75rem;
+		margin-bottom: 0;
+		font-size: 0.95rem;
+	}
+
+	.message--error {
+		color: #b42318;
 	}
 </style>

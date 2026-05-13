@@ -1,0 +1,44 @@
+@page "/skills-edit"
+@using SkillSnap.Client.Models
+@using SkillSnap.Client.Services
+@inject SkillService SkillService
+
+<PageTitle>Gerenciar Skills</PageTitle>
+
+<h2>Gerenciar Skills</h2>
+
+@if (!string.IsNullOrWhiteSpace(loadError))
+{
+    <p class="message message--error">@loadError</p>
+}
+
+@if (skills != null)
+{
+    <ul>
+        @foreach (var skill in skills)
+        {
+            <li>
+                <b>@skill.Name</b> - @skill.Level
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private List<Skill>? skills;
+    private string? loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await SkillService.GetSkillsResultAsync();
+        if (result.Success)
+        {
+            skills = result.Data ?? new List<Skill>();
+            loadError = null;
+        }
+        else
+        {
+            loadError = result.ErrorMessage ?? "Não foi possível carregar as skills.";
+        }
+    }
+}

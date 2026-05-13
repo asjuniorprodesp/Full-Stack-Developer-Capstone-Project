@@ -1,0 +1,84 @@
+@page "/profile-edit"
+@using SkillSnap.Client.Models
+@using SkillSnap.Client.Services
+@inject PortfolioUserService PortfolioUserService
+
+<PageTitle>Editar Perfil</PageTitle>
+
+<h2>Editar Perfil</h2>
+
+@if (!string.IsNullOrWhiteSpace(loadError))
+{
+    <p class="message message--error">@loadError</p>
+}
+
+<EditForm Model="profile" OnValidSubmit="HandleSaveProfileAsync">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="form-group">
+        <label>Nome</label>
+        <InputText class="form-control" @bind-Value="profile.Name" />
+    </div>
+    <div class="form-group">
+        <label>Bio</label>
+        <InputTextArea class="form-control" @bind-Value="profile.Bio" />
+    </div>
+    <div class="form-group">
+        <label>URL da Foto</label>
+        <InputText class="form-control" @bind-Value="profile.ProfileImageUrl" />
+    </div>
+    <button class="btn btn-primary" type="submit" disabled="@isSubmitting">Salvar</button>
+</EditForm>
+
+@if (!string.IsNullOrWhiteSpace(saveMessage))
+{
+    <p class="message @saveMessageCssClass">@saveMessage</p>
+}
+
+@code {
+    private PortfolioUser profile = new();
+    private string? loadError;
+    private string? saveMessage;
+    private string saveMessageCssClass = "message--success";
+    private bool isSubmitting;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var loaded = await PortfolioUserService.GetProfileAsync();
+        if (loaded != null)
+        {
+            profile = loaded;
+            loadError = null;
+        }
+        else
+        {
+            loadError = "Não foi possível carregar o perfil.";
+        }
+    }
+
+    private async Task HandleSaveProfileAsync()
+    {
+        isSubmitting = true;
+        try
+        {
+            var http = PortfolioUserService.GetType().GetProperty("_httpClient", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(PortfolioUserService) as HttpClient;
+            var response = await http!.PostAsJsonAsync("api/profile", profile);
+            if (response.IsSuccessStatusCode)
+            {
+                saveMessage = "Perfil salvo com sucesso!";
+                saveMessageCssClass = "message--success";
+            }
+            else
+            {
+                saveMessage = "Erro ao salvar perfil.";
+                saveMessageCssClass = "message--error";
+            }
+        }
+        catch (Exception ex)
+        {
+            saveMessage = $"Erro: {ex.Message}";
+            saveMessageCssClass = "message--error";
+        }
+        isSubmitting = false;
+    }
+}

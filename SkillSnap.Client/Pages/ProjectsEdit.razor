@@ -1,0 +1,44 @@
+@page "/projects-edit"
+@using SkillSnap.Client.Models
+@using SkillSnap.Client.Services
+@inject ProjectService ProjectService
+
+<PageTitle>Gerenciar Projetos</PageTitle>
+
+<h2>Gerenciar Projetos</h2>
+
+@if (!string.IsNullOrWhiteSpace(loadError))
+{
+    <p class="message message--error">@loadError</p>
+}
+
+@if (projects != null)
+{
+    <ul>
+        @foreach (var project in projects)
+        {
+            <li>
+                <b>@project.Title</b> - @project.Description
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private List<Project>? projects;
+    private string? loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await ProjectService.GetProjectsResultAsync();
+        if (result.Success)
+        {
+            projects = result.Data ?? new List<Project>();
+            loadError = null;
+        }
+        else
+        {
+            loadError = result.ErrorMessage ?? "Não foi possível carregar os projetos.";
+        }
+    }
+}

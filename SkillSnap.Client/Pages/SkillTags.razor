@@ -1,23 +1,141 @@
+@using System.ComponentModel.DataAnnotations
+@using SkillSnap.Client.Models
+@using SkillSnap.Client.Services
+@inject SkillService SkillService
+
 <section class="skill-tags">
 	<h3>Skills</h3>
+
+	@if (!string.IsNullOrWhiteSpace(loadError))
+	{
+		<p class="message message--error">@loadError</p>
+	}
+
 	<div class="skill-tags__list">
-		@foreach (var skill in Skills)
+		@foreach (var skill in skills)
 		{
-			<span class="skill-tag">@skill</span>
+			<span class="skill-tag">@skill.Name (@skill.Level)</span>
 		}
 	</div>
+
+	<EditForm Model="formModel" OnValidSubmit="HandleAddSkillAsync" class="skill-form">
+		<DataAnnotationsValidator />
+		<ValidationSummary />
+
+		<div class="skill-form__row">
+			<label for="skill-name">Nome</label>
+			<InputText id="skill-name" class="form-control" @bind-Value="formModel.Name" />
+		</div>
+
+		<div class="skill-form__row">
+			<label for="skill-level">Nível</label>
+			<InputText id="skill-level" class="form-control" @bind-Value="formModel.Level" />
+		</div>
+
+		<div class="skill-form__row">
+			<label for="portfolio-user-id">PortfolioUserId</label>
+			<InputNumber id="portfolio-user-id" class="form-control" @bind-Value="formModel.PortfolioUserId" />
+		</div>
+
+		<button class="btn btn-primary" type="submit" disabled="@isSubmitting">Adicionar Skill (teste POST)</button>
+	</EditForm>
+
+	@if (!string.IsNullOrWhiteSpace(submitMessage))
+	{
+		<p class="message @submitMessageCssClass">@submitMessage</p>
+	}
 </section>
 
 @code {
-	private readonly string[] Skills =
-	[
-		"C#",
-		"ASP.NET Core",
-		"Blazor",
-		"Entity Framework Core",
-		"SQL",
-		"REST APIs"
-	];
+	[Parameter] public int SelectedUserId { get; set; }
+
+	private List<Skill> allSkills = new();
+	private List<Skill> skills = new();
+	private readonly SkillFormModel formModel = new();
+	private string? loadError;
+	private string? submitMessage;
+	private string submitMessageCssClass = "message--success";
+	private bool isSubmitting;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadSkillsAsync();
+	}
+
+	private async Task LoadSkillsAsync()
+	{
+		var result = await SkillService.GetSkillsResultAsync();
+		if (result.Success)
+		{
+			loadError = null;
+			allSkills = result.Data ?? new List<Skill>();
+			ApplyUserFilter();
+			return;
+		}
+
+		loadError = result.ErrorMessage ?? "Não foi possível carregar as skills.";
+	}
+
+	protected override void OnParametersSet()
+	{
+		if (SelectedUserId > 0)
+		{
+			formModel.PortfolioUserId = SelectedUserId;
+		}
+
+		ApplyUserFilter();
+	}
+
+	private async Task HandleAddSkillAsync()
+	{
+		isSubmitting = true;
+		submitMessage = null;
+
+		var result = await SkillService.AddSkillResultAsync(new Skill
+		{
+			Name = formModel.Name,
+			Level = formModel.Level,
+			PortfolioUserId = formModel.PortfolioUserId
+		});
+
+		if (result.Success && result.Data is not null)
+		{
+			allSkills.Add(result.Data);
+			ApplyUserFilter();
+			submitMessageCssClass = "message--success";
+			submitMessage = "Skill adicionada com sucesso.";
+			formModel.Name = string.Empty;
+			formModel.Level = string.Empty;
+		}
+		else
+		{
+			submitMessageCssClass = "message--error";
+			submitMessage = result.ErrorMessage ?? "Falha ao adicionar skill.";
+		}
+
+		isSubmitting = false;
+	}
+
+	private void ApplyUserFilter()
+	{
+		skills = SelectedUserId <= 0
+			? allSkills
+			: allSkills.Where(skill => skill.PortfolioUserId == SelectedUserId).ToList();
+	}
+
+	private sealed class SkillFormModel
+	{
+		[Required(ErrorMessage = "Informe o nome da skill.")]
+		[StringLength(80, MinimumLength = 2, ErrorMessage = "O nome deve ter entre 2 e 80 caracteres.")]
+		public string Name { get; set; } = string.Empty;
+
+		[Required(ErrorMessage = "Informe o nível.")]
+		[StringLength(40, MinimumLength = 2, ErrorMessage = "O nível deve ter entre 2 e 40 caracteres.")]
+		public string Level { get; set; } = string.Empty;
+
+		[Range(1, int.MaxValue, ErrorMessage = "PortfolioUserId deve ser maior que zero.")]
+		public int PortfolioUserId { get; set; } = 1;
+	}
 }
 
 <style>
@@ -46,5 +164,31 @@
 		color: #0a3d8f;
 		font-size: 0.9rem;
 		font-weight: 600;
+	}
+
+	.skill-form {
+		margin-top: 1rem;
+		padding-top: 1rem;
+		border-top: 1px solid #ececec;
+	}
+
+	.skill-form__row {
+		display: grid;
+		gap: 0.3rem;
+		margin-bottom: 0.6rem;
+	}
+
+	.message {
+		margin-top: 0.75rem;
+		margin-bottom: 0;
+		font-size: 0.95rem;
+	}
+
+	.message--success {
+		color: #157347;
+	}
+
+	.message--error {
+		color: #b42318;
 	}
 </style>
