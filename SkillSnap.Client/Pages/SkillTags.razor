@@ -1,0 +1,50 @@
+<section class="skill-tags">
+	<h3>Skills</h3>
+	<div class="skill-tags__list">
+		@foreach (var skill in Skills)
+		{
+			<span class="skill-tag">@skill</span>
+		}
+	</div>
+</section>
+
+@code {
+	private readonly string[] Skills =
+	[
+		"C#",
+		"ASP.NET Core",
+		"Blazor",
+		"Entity Framework Core",
+		"SQL",
+		"REST APIs"
+	];
+}
+
+<style>
+	.skill-tags {
+		background: #ffffff;
+		border-radius: 12px;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+		padding: 1rem;
+	}
+
+	.skill-tags h3 {
+		margin-top: 0;
+	}
+
+	.skill-tags__list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.skill-tag {
+		display: inline-block;
+		padding: 0.3rem 0.7rem;
+		border-radius: 999px;
+		background: #e9f2ff;
+		color: #0a3d8f;
+		font-size: 0.9rem;
+		font-weight: 600;
+	}
+</style>

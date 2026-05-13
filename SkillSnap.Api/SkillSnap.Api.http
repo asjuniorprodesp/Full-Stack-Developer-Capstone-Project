@@ -1,0 +1,38 @@
+@SkillSnap.Api_HostAddress = http://localhost:5160
+
+# Insere dados de exemplo no banco
+POST {{SkillSnap.Api_HostAddress}}/api/seed
+Accept: application/json
+
+###
+
+# Executa novamente para validar retorno de conflito lógico (dados já existem)
+POST {{SkillSnap.Api_HostAddress}}/api/seed
+Accept: application/json
+
+###
+
+# Lista todos os usuários de portfólio
+GET {{SkillSnap.Api_HostAddress}}/portfolio-users
+Accept: application/json
+
+###
+
+# Cria um novo usuário de portfólio
+POST {{SkillSnap.Api_HostAddress}}/portfolio-users
+Content-Type: application/json
+Accept: application/json
+
+{
+	"name": "Ana Dev",
+	"bio": "Full-stack developer focada em .NET e Blazor",
+	"profileImageUrl": "https://example.com/images/ana-dev.png"
+}
+
+###
+
+# Busca usuário por id (ajuste o id conforme retorno do POST)
+GET {{SkillSnap.Api_HostAddress}}/portfolio-users/1
+Accept: application/json
+
+###

@@ -1,0 +1,45 @@
+<article class="profile-card">
+	<img class="profile-card__image" src="@ProfileImageUrl" alt="Foto de perfil de @Name" />
+	<div class="profile-card__content">
+		<h2>@Name</h2>
+		<p>@Bio</p>
+	</div>
+</article>
+
+@code {
+	[Parameter] public string Name { get; set; } = "Jordan Developer";
+	[Parameter] public string Bio { get; set; } = "Full-stack developer focado em .NET, Blazor e APIs modernas.";
+	[Parameter] public string ProfileImageUrl { get; set; } = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80";
+}
+
+<style>
+	.profile-card {
+		display: grid;
+		grid-template-columns: 96px 1fr;
+		gap: 1rem;
+		align-items: center;
+		padding: 1rem;
+		border-radius: 12px;
+		background: #ffffff;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+		margin-bottom: 1rem;
+	}
+
+	.profile-card__image {
+		width: 96px;
+		height: 96px;
+		object-fit: cover;
+		border-radius: 999px;
+		border: 3px solid #e9f2ff;
+	}
+
+	.profile-card__content h2 {
+		margin: 0 0 0.4rem;
+		font-size: 1.1rem;
+	}
+
+	.profile-card__content p {
+		margin: 0;
+		color: #4a4a4a;
+	}
+</style>

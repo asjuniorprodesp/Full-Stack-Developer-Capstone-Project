@@ -1,0 +1,51 @@
+<section class="project-list">
+	<h3>Projetos</h3>
+
+	@foreach (var project in Projects)
+	{
+		<article class="project-item">
+			<h4>@project.Title</h4>
+			<p>@project.Description</p>
+		</article>
+	}
+</section>
+
+@code {
+	private readonly List<ProjectItem> Projects =
+	[
+		new("SkillSnap API", "API em ASP.NET Core com Entity Framework e SQLite."),
+		new("Dashboard Blazor", "Interface web para visualizar perfil, projetos e skills."),
+		new("Deploy Pipeline", "Automação de build e publicação contínua em ambiente cloud.")
+	];
+
+	private sealed record ProjectItem(string Title, string Description);
+}
+
+<style>
+	.project-list {
+		background: #ffffff;
+		border-radius: 12px;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+		padding: 1rem;
+		margin-bottom: 1rem;
+	}
+
+	.project-list h3 {
+		margin-top: 0;
+	}
+
+	.project-item + .project-item {
+		margin-top: 0.8rem;
+		padding-top: 0.8rem;
+		border-top: 1px solid #ececec;
+	}
+
+	.project-item h4 {
+		margin: 0;
+	}
+
+	.project-item p {
+		margin: 0.3rem 0 0;
+		color: #4a4a4a;
+	}
+</style>
