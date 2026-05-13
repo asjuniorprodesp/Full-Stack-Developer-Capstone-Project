@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using SkillSnap.Api.Models;
 
 namespace SkillSnap.Api.Controllers;
@@ -9,18 +10,49 @@ namespace SkillSnap.Api.Controllers;
 [Route("api/[controller]")]
 public class ProjectsController : ControllerBase
 {
-	private readonly SkillSnapContext _context;
+	private const string ProjectsCacheKey = "projects";
+	private const string ProjectsFallbackCacheKey = "projects:fallback";
+	private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
+	private static readonly TimeSpan FallbackExpiration = TimeSpan.FromMinutes(30);
 
-	public ProjectsController(SkillSnapContext context)
+	private readonly SkillSnapContext _context;
+	private readonly IMemoryCache _cache;
+
+	public ProjectsController(SkillSnapContext context, IMemoryCache cache)
 	{
 		_context = context;
+		_cache = cache;
 	}
 
 	[HttpGet]
 	public async Task<ActionResult<IEnumerable<Project>>> GetAll()
 	{
-		var projects = await _context.Projects.ToListAsync();
-		return Ok(projects);
+		if (_cache.TryGetValue(ProjectsCacheKey, out List<Project>? cachedProjects))
+		{
+			return Ok(cachedProjects);
+		}
+
+		try
+		{
+			var projects = await _context.Projects
+				.AsNoTracking()
+				.Include(project => project.PortfolioUser)
+				.ToListAsync();
+			SetProjectCache(projects);
+			return Ok(projects);
+		}
+		catch
+		{
+			if (_cache.TryGetValue(ProjectsFallbackCacheKey, out List<Project>? fallbackProjects))
+			{
+				return Ok(fallbackProjects);
+			}
+
+			return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+			{
+				message = "Não foi possível carregar os projetos no momento e não há cache de fallback disponível."
+			});
+		}
 	}
 
 	[HttpPost]
@@ -29,7 +61,15 @@ public class ProjectsController : ControllerBase
 	{
 		_context.Projects.Add(project);
 		await _context.SaveChangesAsync();
+		_cache.Remove(ProjectsCacheKey);
+		_cache.Remove(ProjectsFallbackCacheKey);
 
 		return CreatedAtAction(nameof(GetAll), new { id = project.Id }, project);
+	}
+
+	private void SetProjectCache(List<Project> projects)
+	{
+		_cache.Set(ProjectsCacheKey, projects, CacheExpiration);
+		_cache.Set(ProjectsFallbackCacheKey, projects, FallbackExpiration);
 	}
 }

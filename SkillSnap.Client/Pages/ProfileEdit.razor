@@ -2,6 +2,7 @@
 @using SkillSnap.Client.Models
 @using SkillSnap.Client.Services
 @inject PortfolioUserService PortfolioUserService
+@inject UserSessionService UserSessionService
 
 <PageTitle>Editar Perfil</PageTitle>
 
@@ -48,6 +49,7 @@
         if (loaded != null)
         {
             profile = loaded;
+            UserSessionService.SetCurrentEditingProfile(profile.Id, profile.Name);
             loadError = null;
         }
         else
@@ -67,6 +69,7 @@
             {
                 saveMessage = "Perfil salvo com sucesso!";
                 saveMessageCssClass = "message--success";
+                UserSessionService.SetCurrentEditingProfile(profile.Id, profile.Name);
             }
             else
             {

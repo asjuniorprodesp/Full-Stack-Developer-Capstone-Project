@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using SkillSnap.Api.Models;
 
 namespace SkillSnap.Api.Controllers;
@@ -9,18 +10,49 @@ namespace SkillSnap.Api.Controllers;
 [Route("api/[controller]")]
 public class SkillsController : ControllerBase
 {
-	private readonly SkillSnapContext _context;
+	private const string SkillsCacheKey = "skills";
+	private const string SkillsFallbackCacheKey = "skills:fallback";
+	private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
+	private static readonly TimeSpan FallbackExpiration = TimeSpan.FromMinutes(30);
 
-	public SkillsController(SkillSnapContext context)
+	private readonly SkillSnapContext _context;
+	private readonly IMemoryCache _cache;
+
+	public SkillsController(SkillSnapContext context, IMemoryCache cache)
 	{
 		_context = context;
+		_cache = cache;
 	}
 
 	[HttpGet]
 	public async Task<ActionResult<IEnumerable<Skill>>> GetAll()
 	{
-		var skills = await _context.Skills.ToListAsync();
-		return Ok(skills);
+		if (_cache.TryGetValue(SkillsCacheKey, out List<Skill>? cachedSkills))
+		{
+			return Ok(cachedSkills);
+		}
+
+		try
+		{
+			var skills = await _context.Skills
+				.AsNoTracking()
+				.Include(skill => skill.PortfolioUser)
+				.ToListAsync();
+			SetSkillCache(skills);
+			return Ok(skills);
+		}
+		catch
+		{
+			if (_cache.TryGetValue(SkillsFallbackCacheKey, out List<Skill>? fallbackSkills))
+			{
+				return Ok(fallbackSkills);
+			}
+
+			return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+			{
+				message = "Não foi possível carregar as skills no momento e não há cache de fallback disponível."
+			});
+		}
 	}
 
 	[HttpPost]
@@ -29,7 +61,15 @@ public class SkillsController : ControllerBase
 	{
 		_context.Skills.Add(skill);
 		await _context.SaveChangesAsync();
+		_cache.Remove(SkillsCacheKey);
+		_cache.Remove(SkillsFallbackCacheKey);
 
 		return CreatedAtAction(nameof(GetAll), new { id = skill.Id }, skill);
+	}
+
+	private void SetSkillCache(List<Skill> skills)
+	{
+		_cache.Set(SkillsCacheKey, skills, CacheExpiration);
+		_cache.Set(SkillsFallbackCacheKey, skills, FallbackExpiration);
 	}
 }

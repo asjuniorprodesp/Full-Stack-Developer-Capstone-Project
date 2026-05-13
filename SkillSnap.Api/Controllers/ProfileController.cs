@@ -18,7 +18,11 @@ public class ProfileController : ControllerBase
     [HttpGet]
     public ActionResult<PortfolioUser> GetProfile()
     {
-        var user = _context.PortfolioUsers.FirstOrDefault();
+        var user = _context.PortfolioUsers
+            .AsNoTracking()
+            .Include(profile => profile.Projects)
+            .Include(profile => profile.Skills)
+            .FirstOrDefault();
         if (user == null)
             return NotFound();
         return user;
@@ -29,6 +33,8 @@ public class ProfileController : ControllerBase
     {
         var users = await _context.PortfolioUsers
             .AsNoTracking()
+            .Include(profile => profile.Projects)
+            .Include(profile => profile.Skills)
             .OrderBy(user => user.Id)
             .ToListAsync();
 

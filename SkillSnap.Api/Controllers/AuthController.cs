@@ -114,7 +114,8 @@ public class AuthController : ControllerBase
 			return Unauthorized(new { message = "Invalid credentials." });
 		}
 
-		var token = GenerateJwtToken(user);
+		var roles = await _userManager.GetRolesAsync(user);
+		var token = GenerateJwtToken(user, roles);
 
 		return Ok(new
 		{
@@ -125,12 +126,13 @@ public class AuthController : ControllerBase
 				user.Id,
 				user.UserName,
 				user.Email,
-				user.FullName
+				user.FullName,
+				role = roles.FirstOrDefault() ?? "User"
 			}
 		});
 	}
 
-	private string GenerateJwtToken(ApplicationUser user)
+	private string GenerateJwtToken(ApplicationUser user, IEnumerable<string> roles)
 	{
 		var key = _configuration["Jwt:Key"];
 		var issuer = _configuration["Jwt:Issuer"];
@@ -148,6 +150,8 @@ public class AuthController : ControllerBase
 			new(JwtRegisteredClaimNames.UniqueName, user.UserName ?? string.Empty),
 			new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
 		};
+
+		claims.AddRange(roles.Where(role => !string.IsNullOrWhiteSpace(role)).Select(role => new Claim(ClaimTypes.Role, role)));
 
 		var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
 		var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);

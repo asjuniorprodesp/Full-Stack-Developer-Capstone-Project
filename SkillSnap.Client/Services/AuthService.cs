@@ -14,13 +14,15 @@ public class AuthService
 	private readonly HttpClient _httpClient;
 	private readonly IJSRuntime _jsRuntime;
 	private readonly NavigationManager _navigationManager;
+	private readonly UserSessionService _userSessionService;
 	private string? _token;
 
-	public AuthService(HttpClient httpClient, IJSRuntime jsRuntime, NavigationManager navigationManager)
+	public AuthService(HttpClient httpClient, IJSRuntime jsRuntime, NavigationManager navigationManager, UserSessionService userSessionService)
 	{
 		_httpClient = httpClient;
 		_jsRuntime = jsRuntime;
 		_navigationManager = navigationManager;
+		_userSessionService = userSessionService;
 	}
 
 	public bool IsAuthenticated => !string.IsNullOrWhiteSpace(_token);
@@ -43,6 +45,7 @@ public class AuthService
 		}
 
 		SetAuthenticatedState(storedToken);
+		SyncSessionFromToken(storedToken);
 		AuthStateChanged?.Invoke();
 	}
 
@@ -75,6 +78,7 @@ public class AuthService
 
 		await _jsRuntime.InvokeVoidAsync("skillSnapAuth.setToken", TokenStorageKey, payload.Token);
 		SetAuthenticatedState(payload.Token);
+		SyncSessionFromToken(payload.Token);
 		AuthStateChanged?.Invoke();
 		return ApiResult<bool>.Ok(true);
 	}
@@ -86,6 +90,7 @@ public class AuthService
 		UserName = null;
 		Email = null;
 		_httpClient.DefaultRequestHeaders.Authorization = null;
+		_userSessionService.Clear();
 		AuthStateChanged?.Invoke();
 
 		if (navigateToLogin)
@@ -111,19 +116,34 @@ public class AuthService
 		ReadIdentityFromToken(token);
 	}
 
+	private void SyncSessionFromToken(string token)
+	{
+		var payload = ReadJwtPayload(token);
+		var userId = payload is not null && payload.TryGetValue("sub", out var subValue) ? subValue.GetString() : null;
+		var role = ReadRoleFromPayload(payload);
+		_userSessionService.SetUser(userId, UserName, Email, role);
+	}
+
 	private void ReadIdentityFromToken(string token)
 	{
 		var payload = ReadJwtPayload(token);
 		if (payload is null)
 		{
+			UserId = null;
 			UserName = null;
 			Email = null;
+			Role = null;
 			return;
 		}
 
+		UserId = payload.TryGetValue("sub", out var userId) ? userId.GetString() : null;
 		UserName = payload.TryGetValue("unique_name", out var userName) ? userName.GetString() : null;
 		Email = payload.TryGetValue("email", out var email) ? email.GetString() : null;
+		Role = ReadRoleFromPayload(payload);
 	}
+
+	private string? UserId { get; set; }
+	public string? Role { get; private set; }
 
 	private static bool IsExpired(string token)
 	{
@@ -186,6 +206,39 @@ public class AuthService
 		{
 			return null;
 		}
+	}
+
+	private static string? ReadRoleFromPayload(Dictionary<string, JsonElement>? payload)
+	{
+		if (payload is null)
+		{
+			return null;
+		}
+
+		var roleKeys = new[] { "role", "roles", System.Security.Claims.ClaimTypes.Role };
+		foreach (var key in roleKeys)
+		{
+			if (!payload.TryGetValue(key, out var value))
+			{
+				continue;
+			}
+
+			if (value.ValueKind == JsonValueKind.String)
+			{
+				return value.GetString();
+			}
+
+			if (value.ValueKind == JsonValueKind.Array)
+			{
+				var first = value.EnumerateArray().FirstOrDefault();
+				if (first.ValueKind == JsonValueKind.String)
+				{
+					return first.GetString();
+				}
+			}
+		}
+
+		return null;
 	}
 
 	private static async Task<string> ReadErrorOrDefaultAsync(HttpResponseMessage response, string fallback)
