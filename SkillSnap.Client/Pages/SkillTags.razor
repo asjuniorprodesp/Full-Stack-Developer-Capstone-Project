@@ -3,8 +3,9 @@
 @using SkillSnap.Client.Services
 @inject SkillService SkillService
 
-<section class="skill-tags">
+<section class="skill-tags section-card">
 	<h3>Skills</h3>
+	<p class="skill-tags__hint">Badges e formulário abaixo ajudam a validar a experiência do perfil selecionado.</p>
 
 	@if (!string.IsNullOrWhiteSpace(loadError))
 	{
@@ -14,7 +15,7 @@
 	<div class="skill-tags__list">
 		@foreach (var skill in skills)
 		{
-			<span class="skill-tag">@skill.Name (@skill.Level)</span>
+			<span class="skill-tag">@skill.Name · @skill.Level</span>
 		}
 	</div>
 
@@ -140,14 +141,20 @@
 
 <style>
 	.skill-tags {
-		background: #ffffff;
-		border-radius: 12px;
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-		padding: 1rem;
+		padding: 1.1rem;
+		margin-bottom: 1rem;
 	}
 
 	.skill-tags h3 {
 		margin-top: 0;
+		margin-bottom: 0.35rem;
+		font-size: 1.15rem;
+	}
+
+	.skill-tags__hint {
+		margin: 0 0 0.85rem;
+		font-size: 0.92rem;
+		color: #667085;
 	}
 
 	.skill-tags__list {
@@ -158,9 +165,9 @@
 
 	.skill-tag {
 		display: inline-block;
-		padding: 0.3rem 0.7rem;
+		padding: 0.35rem 0.8rem;
 		border-radius: 999px;
-		background: #e9f2ff;
+		background: #eef4ff;
 		color: #0a3d8f;
 		font-size: 0.9rem;
 		font-weight: 600;
@@ -190,5 +197,15 @@
 
 	.message--error {
 		color: #b42318;
+	}
+
+	@@media (max-width: 640.98px) {
+		.skill-tags__list {
+			gap: 0.4rem;
+		}
+
+		.skill-tag {
+			font-size: 0.85rem;
+		}
 	}
 </style>

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using SkillSnap.Api.Models;
 using SkillSnap.Api;
 
@@ -10,9 +12,14 @@ namespace SkillSnap.Api.Controllers;
 public class ProfileController : ControllerBase
 {
     private readonly SkillSnapContext _context;
-    public ProfileController(SkillSnapContext context)
+    private readonly IMemoryCache _cache;
+    private readonly ILogger<ProfileController> _logger;
+
+    public ProfileController(SkillSnapContext context, IMemoryCache cache, ILogger<ProfileController> logger)
     {
         _context = context;
+        _cache = cache;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -56,6 +63,13 @@ public class ProfileController : ControllerBase
             user.ProfileImageUrl = profile.ProfileImageUrl;
         }
         _context.SaveChanges();
+
+        _cache.Remove("projects");
+        _cache.Remove("projects:fallback");
+        _cache.Remove("skills");
+        _cache.Remove("skills:fallback");
+        _logger.LogInformation("Profile updated; project and skill caches invalidated.");
+
         return profile;
     }
 }

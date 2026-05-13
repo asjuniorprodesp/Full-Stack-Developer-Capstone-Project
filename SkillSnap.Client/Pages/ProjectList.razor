@@ -2,7 +2,7 @@
 @using SkillSnap.Client.Services
 @inject ProjectService ProjectService
 
-<section class="project-list">
+<section class="project-list section-card">
 	<h3>Projetos</h3>
 
 	@if (!string.IsNullOrWhiteSpace(loadError))
@@ -10,12 +10,22 @@
 		<p class="message message--error">@loadError</p>
 	}
 
-	@foreach (var project in projects)
+	@if (projects.Count == 0)
 	{
-		<article class="project-item">
-			<h4>@project.Title</h4>
-			<p>@project.Description</p>
-		</article>
+		<p class="message">Nenhum projeto encontrado para este perfil.</p>
+	}
+	else
+	{
+		@foreach (var project in projects)
+		{
+			<article class="project-item">
+				<img class="project-item__image" src="@GetProjectImage(project)" alt="Imagem do projeto @project.Title" />
+				<div class="project-item__body">
+					<h4>@project.Title</h4>
+					<p>@(string.IsNullOrWhiteSpace(project.Description) ? "Sem descrição disponível." : project.Description)</p>
+				</div>
+			</article>
+		}
 	}
 </section>
 
@@ -51,34 +61,61 @@
 			? allProjects
 			: allProjects.Where(project => project.PortfolioUserId == SelectedUserId).ToList();
 	}
+
+	private static string GetProjectImage(Project project)
+	{
+		return string.IsNullOrWhiteSpace(project.ImageUrl)
+			? "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80"
+			: project.ImageUrl;
+	}
 }
 
 <style>
 	.project-list {
-		background: #ffffff;
-		border-radius: 12px;
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-		padding: 1rem;
+		padding: 1.1rem;
 		margin-bottom: 1rem;
 	}
 
 	.project-list h3 {
 		margin-top: 0;
+		margin-bottom: 0.9rem;
+		font-size: 1.15rem;
+	}
+
+	.project-item {
+		display: grid;
+		grid-template-columns: 96px 1fr;
+		gap: 0.9rem;
+		align-items: start;
+		padding-top: 0.9rem;
 	}
 
 	.project-item + .project-item {
-		margin-top: 0.8rem;
-		padding-top: 0.8rem;
+		margin-top: 0.9rem;
 		border-top: 1px solid #ececec;
 	}
 
+	.project-item__image {
+		width: 96px;
+		height: 96px;
+		border-radius: 14px;
+		object-fit: cover;
+		background: #e2e8f0;
+	}
+
+	.project-item__body {
+		min-width: 0;
+	}
+
 	.project-item h4 {
-		margin: 0;
+		margin: 0 0 0.35rem;
+		font-size: 1rem;
 	}
 
 	.project-item p {
-		margin: 0.3rem 0 0;
+		margin: 0;
 		color: #4a4a4a;
+		font-size: 0.95rem;
 	}
 
 	.message {
@@ -89,5 +126,16 @@
 
 	.message--error {
 		color: #b42318;
+	}
+
+	@@media (max-width: 640.98px) {
+		.project-item {
+			grid-template-columns: 1fr;
+		}
+
+		.project-item__image {
+			width: 100%;
+			height: 180px;
+		}
 	}
 </style>

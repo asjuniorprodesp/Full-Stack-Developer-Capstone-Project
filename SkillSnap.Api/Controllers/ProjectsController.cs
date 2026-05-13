@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using SkillSnap.Api.Models;
 
 namespace SkillSnap.Api.Controllers;
@@ -17,11 +18,13 @@ public class ProjectsController : ControllerBase
 
 	private readonly SkillSnapContext _context;
 	private readonly IMemoryCache _cache;
+	private readonly ILogger<ProjectsController> _logger;
 
-	public ProjectsController(SkillSnapContext context, IMemoryCache cache)
+	public ProjectsController(SkillSnapContext context, IMemoryCache cache, ILogger<ProjectsController> logger)
 	{
 		_context = context;
 		_cache = cache;
+		_logger = logger;
 	}
 
 	[HttpGet]
@@ -29,8 +32,11 @@ public class ProjectsController : ControllerBase
 	{
 		if (_cache.TryGetValue(ProjectsCacheKey, out List<Project>? cachedProjects))
 		{
+			_logger.LogInformation("Projects cache HIT for key {CacheKey}.", ProjectsCacheKey);
 			return Ok(cachedProjects);
 		}
+
+		_logger.LogInformation("Projects cache MISS for key {CacheKey}.", ProjectsCacheKey);
 
 		try
 		{
@@ -39,14 +45,18 @@ public class ProjectsController : ControllerBase
 				.Include(project => project.PortfolioUser)
 				.ToListAsync();
 			SetProjectCache(projects);
+			_logger.LogInformation("Projects cache refreshed with {ProjectCount} item(s).", projects.Count);
 			return Ok(projects);
 		}
 		catch
 		{
 			if (_cache.TryGetValue(ProjectsFallbackCacheKey, out List<Project>? fallbackProjects))
 			{
+				_logger.LogWarning("Projects primary cache unavailable; fallback cache HIT for key {CacheKey}.", ProjectsFallbackCacheKey);
 				return Ok(fallbackProjects);
 			}
+
+			_logger.LogError("Projects cache MISS and fallback cache unavailable.");
 
 			return StatusCode(StatusCodes.Status503ServiceUnavailable, new
 			{
@@ -61,8 +71,12 @@ public class ProjectsController : ControllerBase
 	{
 		_context.Projects.Add(project);
 		await _context.SaveChangesAsync();
-		_cache.Remove(ProjectsCacheKey);
-		_cache.Remove(ProjectsFallbackCacheKey);
+		var projects = await _context.Projects
+			.AsNoTracking()
+			.Include(item => item.PortfolioUser)
+			.ToListAsync();
+		SetProjectCache(projects);
+		_logger.LogInformation("Projects cache refreshed after write with {ProjectCount} item(s).", projects.Count);
 
 		return CreatedAtAction(nameof(GetAll), new { id = project.Id }, project);
 	}
