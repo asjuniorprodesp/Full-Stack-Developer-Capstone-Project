@@ -1,85 +1,85 @@
 # SkillSnap
 
-## Project Summary
+## Resumo do projeto
 
-SkillSnap is a full-stack portfolio application built with ASP.NET Core and Blazor WebAssembly. The app lets users browse portfolio profiles, inspect projects and skills, and manage portfolio data through a REST API backed by Entity Framework Core and SQLite.
+O SkillSnap é uma aplicação full-stack de portfólio construída com ASP.NET Core e Blazor WebAssembly. O sistema permite navegar por perfis de portfólio, visualizar projetos e habilidades, e gerenciar os dados por meio de uma API REST com Entity Framework Core e SQLite.
 
-The solution is split into two parts:
-- `SkillSnap.Api`: ASP.NET Core Web API with Identity, JWT authentication, caching, and EF Core persistence.
-- `SkillSnap.Client`: Blazor WebAssembly front end with authentication, session state, and a responsive UI.
+A solução está dividida em duas partes:
+- `SkillSnap.Api`: API Web ASP.NET Core com Identity, autenticação JWT, cache e persistência com EF Core.
+- `SkillSnap.Client`: front-end em Blazor WebAssembly com autenticação, estado de sessão e interface responsiva.
 
-## Key Features
+## Principais recursos
 
-### CRUD and Data Management
-- Portfolio profile viewing and editing.
-- Project listing and creation.
-- Skill listing and creation.
-- Database seed and reset workflow for quick testing.
-- EF Core relationships with related data loaded efficiently using `Include()` and `AsNoTracking()`.
+### CRUD e gerenciamento de dados
+- Visualização e edição de perfis de portfólio.
+- Listagem e criação de projetos.
+- Listagem e criação de habilidades.
+- Fluxo de seed e reset do banco para testes rápidos.
+- Relacionamentos do EF Core com carregamento eficiente de dados relacionados usando `Include()` e `AsNoTracking()`.
 
-### Security
-- ASP.NET Identity for user registration and login.
-- JWT token generation and validation.
-- Role-based authorization for elevated actions such as project and skill creation.
-- Token storage in browser local storage with automatic reuse after reload.
+### Segurança
+- ASP.NET Identity para registro e login de usuários.
+- Geração e validação de token JWT.
+- Autorização baseada em roles para ações elevadas, como criação de projetos e skills.
+- Armazenamento do token no local storage do navegador com reaproveitamento automático após recarregar a página.
 
-### Caching and Performance
-- In-memory caching for common API queries.
-- Cache expiration and fallback logic to reduce database load.
-- Cache refresh after CRUD operations to keep returned data consistent.
-- Logging of cache hit, miss, and refresh events for verification.
+### Cache e desempenho
+- Cache em memória para consultas frequentes da API.
+- Expiração de cache e lógica de fallback para reduzir carga no banco de dados.
+- Atualização do cache após operações CRUD para manter os dados consistentes.
+- Logs de hit, miss e refresh do cache para verificação.
 
-### Blazor State Management
-- Scoped state container for logged-in user information.
-- Persisted session state for selected profile and editing context.
-- Shared state between components without reloading the page.
+### Gerenciamento de estado no Blazor
+- Container de estado escopado para informações do usuário logado.
+- Estado persistido para o perfil selecionado e contexto de edição.
+- Compartilhamento de estado entre componentes sem recarregar a página.
 
-## Development Process and Use of Copilot
+## Processo de desenvolvimento e uso do Copilot
 
-This project was built incrementally with Copilot assisting in planning, code generation, and review. Copilot was used to:
-- scaffold API controllers and Blazor pages,
-- implement authentication and JWT handling,
-- add client-side token storage and session state,
-- refactor components for cleaner data flow,
-- optimize API queries and caching,
-- polish the UI for desktop and mobile layouts.
+Este projeto foi construído de forma incremental com apoio do Copilot no planejamento, geração de código e revisão. O Copilot foi usado para:
+- criar a base de controllers da API e páginas Blazor,
+- implementar autenticação e tratamento de JWT,
+- adicionar armazenamento do token no cliente e estado de sessão,
+- refatorar componentes para melhorar o fluxo de dados,
+- otimizar consultas da API e o uso de cache,
+- polir a interface para telas desktop e mobile.
 
-The workflow was iterative: implement a feature, build both projects, fix compile/runtime issues, and then refine the user experience. Copilot was especially useful for accelerating repetitive code such as service classes, form components, and API response handling.
+O fluxo de trabalho foi iterativo: implementar uma funcionalidade, compilar os dois projetos, corrigir problemas de compilação ou execução e depois refinar a experiência do usuário. O Copilot foi especialmente útil para acelerar código repetitivo, como classes de serviço, componentes de formulário e tratamento de respostas da API.
 
-## Known Issues and Future Improvements
+## Problemas conhecidos e melhorias futuras
 
-### Known Issues
-- Some CRUD screens are still basic and could use better validation and feedback messages.
-- Admin role assignment still depends on backend setup or manual seeding.
-- The profile update flow is simple and could be expanded to handle multiple users more explicitly.
+### Problemas conhecidos
+- Algumas telas de CRUD ainda são básicas e poderiam ter validação e mensagens de feedback melhores.
+- A atribuição da role de administrador ainda depende de configuração no backend ou seed manual.
+- O fluxo de atualização de perfil é simples e pode ser ampliado para lidar com múltiplos usuários de forma mais explícita.
 
-### Future Improvements
-- Add a proper role seeding flow for an initial admin account.
-- Replace the current profile editing approach with dedicated API methods and cleaner services.
-- Add unit and integration tests for authentication, caching, and state management.
-- Improve loading states, empty states, and error handling across the Blazor UI.
-- Add pagination or search for projects and skills if the dataset grows.
-- Consider using a delegated `HttpMessageHandler` for bearer token injection instead of setting headers in individual services.
+### Melhorias futuras
+- Adicionar um fluxo de seed adequado para criar uma conta administradora inicial.
+- Substituir o processo atual de edição de perfil por métodos de API dedicados e serviços mais limpos.
+- Adicionar testes unitários e de integração para autenticação, cache e gerenciamento de estado.
+- Melhorar estados de carregamento, estados vazios e tratamento de erros na interface Blazor.
+- Adicionar paginação ou busca para projetos e habilidades quando o volume de dados crescer.
+- Considerar o uso de um `HttpMessageHandler` delegado para injetar o bearer token em vez de configurar os headers em serviços individuais.
 
-## Running the Solution
+## Como executar a solução
 
 ### API
 ```bash
 dotnet run --project SkillSnap.Api
 ```
 
-### Client
+### Cliente
 ```bash
 dotnet run --project SkillSnap.Client
 ```
 
-Make sure the API is available before using the client.
+Certifique-se de que a API esteja em execução antes de abrir o cliente.
 
-## Notes
+## Observações
 
-The project includes:
-- JWT authentication
-- role-based authorization
-- in-memory caching with fallback
-- responsive Blazor UI
-- local session persistence
+O projeto inclui:
+- autenticação JWT
+- autorização baseada em roles
+- cache em memória com fallback
+- interface Blazor responsiva
+- persistência local de sessão
