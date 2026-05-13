@@ -6,12 +6,14 @@ namespace SkillSnap.Client.Services;
 public class ProjectService
 {
 	private readonly HttpClient _httpClient;
+	private readonly AuthService _authService;
 	private readonly ILogger<ProjectService> _logger;
 	private const int MaxRetries = 2;
 
-	public ProjectService(HttpClient httpClient, ILogger<ProjectService> logger)
+	public ProjectService(HttpClient httpClient, AuthService authService, ILogger<ProjectService> logger)
 	{
 		_httpClient = httpClient;
+		_authService = authService;
 		_logger = logger;
 	}
 
@@ -25,6 +27,7 @@ public class ProjectService
 	{
 		return ExecuteWithRetryAsync(async () =>
 		{
+			await _authService.EnsureAuthorizationHeaderAsync();
 			var response = await _httpClient.GetAsync("api/projects");
 			return await ParseResponseAsync<List<Project>>(response, "carregar projetos");
 		});
@@ -40,6 +43,7 @@ public class ProjectService
 	{
 		return ExecuteWithRetryAsync(async () =>
 		{
+			await _authService.EnsureAuthorizationHeaderAsync();
 			var response = await _httpClient.PostAsJsonAsync("api/projects", newProject);
 			return await ParseResponseAsync<Project>(response, "adicionar projeto");
 		});

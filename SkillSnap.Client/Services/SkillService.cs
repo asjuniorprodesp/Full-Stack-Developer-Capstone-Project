@@ -6,12 +6,14 @@ namespace SkillSnap.Client.Services;
 public class SkillService
 {
 	private readonly HttpClient _httpClient;
+	private readonly AuthService _authService;
 	private readonly ILogger<SkillService> _logger;
 	private const int MaxRetries = 2;
 
-	public SkillService(HttpClient httpClient, ILogger<SkillService> logger)
+	public SkillService(HttpClient httpClient, AuthService authService, ILogger<SkillService> logger)
 	{
 		_httpClient = httpClient;
+		_authService = authService;
 		_logger = logger;
 	}
 
@@ -25,6 +27,7 @@ public class SkillService
 	{
 		return ExecuteWithRetryAsync(async () =>
 		{
+			await _authService.EnsureAuthorizationHeaderAsync();
 			var response = await _httpClient.GetAsync("api/skills");
 			return await ParseResponseAsync<List<Skill>>(response, "carregar skills");
 		});
@@ -40,6 +43,7 @@ public class SkillService
 	{
 		return ExecuteWithRetryAsync(async () =>
 		{
+			await _authService.EnsureAuthorizationHeaderAsync();
 			var response = await _httpClient.PostAsJsonAsync("api/skills", newSkill);
 			return await ParseResponseAsync<Skill>(response, "adicionar skill");
 		});

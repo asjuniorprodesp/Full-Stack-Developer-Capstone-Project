@@ -6,10 +6,12 @@ namespace SkillSnap.Client.Services;
 public class PortfolioUserService
 {
     private readonly HttpClient _httpClient;
+    private readonly AuthService _authService;
     private readonly ILogger<PortfolioUserService> _logger;
-    public PortfolioUserService(HttpClient httpClient, ILogger<PortfolioUserService> logger)
+    public PortfolioUserService(HttpClient httpClient, AuthService authService, ILogger<PortfolioUserService> logger)
     {
         _httpClient = httpClient;
+        _authService = authService;
         _logger = logger;
     }
 
@@ -17,6 +19,7 @@ public class PortfolioUserService
     {
         try
         {
+            await _authService.EnsureAuthorizationHeaderAsync();
             var result = await _httpClient.GetFromJsonAsync<PortfolioUser>("api/profile");
             return result;
         }
@@ -31,6 +34,7 @@ public class PortfolioUserService
     {
         try
         {
+            await _authService.EnsureAuthorizationHeaderAsync();
             var result = await _httpClient.GetFromJsonAsync<List<PortfolioUser>>("api/profile/all");
             return result ?? new List<PortfolioUser>();
         }
